@@ -113,11 +113,11 @@ object FlickrFolderUploaderApp {
     }
 
     // Upload all JPEGs
-    val photoIds = directory.listFiles(fileFilter).toList.map { photoFile =>
+    val photoIds = directory.listFiles(fileFilter).toList.flatMap { photoFile =>
       fileNameToPhotoId.get(photoFile.getAbsolutePath) match {
         case Some(photoId) =>
           println(s"Photo already uploaded. Skipping. [${photoFile.getAbsolutePath}]")
-          photoId
+          Some(photoId)
 
         case None =>
           val metadata = new UploadMetaData()
@@ -131,19 +131,26 @@ object FlickrFolderUploaderApp {
           metadata.setSafetyLevel("SAFETYLEVEL_SAFE")
           metadata.setContentType("CONTENTTYPE_PHOTO")
 
-          // Upload synchronously
-          val photoId = uploader.upload(photoFile, metadata)
-          println(s"Photo uploaded. [${photoFile.getName}, $photoId]")
+          try {
+            // Upload synchronously
+            val photoId = uploader.upload(photoFile, metadata)
+            println(s"Photo uploaded. [${photoFile.getName}, $photoId]")
 
-          bufferedWriter.write(photoFile.getAbsolutePath)
-          bufferedWriter.write("\n")
-          bufferedWriter.write(photoId)
-          bufferedWriter.write("\n")
-          bufferedWriter.flush()
+            bufferedWriter.write(photoFile.getAbsolutePath)
+            bufferedWriter.write("\n")
+            bufferedWriter.write(photoId)
+            bufferedWriter.write("\n")
+            bufferedWriter.flush()
 
-          fileNameToPhotoId.update(photoFile.getAbsolutePath, photoId)
+            fileNameToPhotoId.update(photoFile.getAbsolutePath, photoId)
 
-          photoId
+            Some(photoId)
+          }
+          catch {
+            case ex: Exception =>
+              println(ex)
+              None
+          }
       }
     }
 
