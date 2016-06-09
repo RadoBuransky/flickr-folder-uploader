@@ -1,0 +1,16 @@
+group 'com.buransky'
+version '1.0-SNAPSHOT'
+
+apply plugin: "scala"
+apply plugin: "java"
+
+sourceCompatibility = 1.5
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.scala-lang:scala-library:2.11.8"
+    compile "com.flickr4java:flickr4java:2.16"
+}
