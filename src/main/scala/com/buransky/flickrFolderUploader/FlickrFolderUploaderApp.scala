@@ -38,12 +38,13 @@ object FlickrFolderUploaderApp {
     }
     RequestContext.getRequestContext.setAuth(auth)
 
-    val galleries = flickr.getGalleriesInterface
-    val all = galleries.getList(userId, 0, 0).asScala.map(_.getTitle).mkString(",")
-    println(all)
+    // Print all albums:
+    val photosets = flickr.getPhotosetsInterface
+    println(photosets.getList(userId).getPhotosets.asScala.map(_.getTitle).mkString(","))
 
-//    val photoset = photosets.create("title", "description", "27549265605")
-//    println(s"Photoset created. [${photoset.getId}]")
+    // Create new album
+    val newAlbum = photosets.create("title", "description", "27549264665")
+    println(newAlbum.getUrl)
   }
 
   private def authorize(): Unit = {
