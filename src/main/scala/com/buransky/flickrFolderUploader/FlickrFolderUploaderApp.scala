@@ -55,10 +55,10 @@ object FlickrFolderUploaderApp {
     val all = photosets.getList(userId).getPhotosets.asScala
 
     loadFileNameToPhotoIds()
-    bufferedWriter = new BufferedWriter(new FileWriter(new File(fileNameToPhotoIdPath)))
+    bufferedWriter = new BufferedWriter(new FileWriter(new File(fileNameToPhotoIdPath), true))
     try {
       // Upload all albums
-      rootDir.listFiles().foreach { file =>
+      rootDir.listFiles().sortBy(_.getName).foreach { file =>
         if (file.isDirectory && !all.exists(_.getTitle == file.getName)) {
           uploadAlbum(file, uploader, photosets)
         }
@@ -113,6 +113,7 @@ object FlickrFolderUploaderApp {
     }
 
     // Upload all JPEGs
+    // TODO: sort by time created
     val photoIds = directory.listFiles(fileFilter).toList.flatMap { photoFile =>
       fileNameToPhotoId.get(photoFile.getAbsolutePath) match {
         case Some(photoId) =>
@@ -157,13 +158,21 @@ object FlickrFolderUploaderApp {
     if (photoIds.nonEmpty) {
       // Create album
       val newAlbum = photosets.create(directory.getName, "", photoIds.head)
+      print(s"New album created ${newAlbum.getUrl}. Adding photos ... ")
       photoIds.tail.foreach { photoId =>
-        photosets.addPhoto(newAlbum.getId, photoId)
+        try {
+          photosets.addPhoto(newAlbum.getId, photoId)
+        }
+        catch {
+          case ex: Exception => throw new AppException(s"Cannot add photo to album! [${newAlbum.getId}, $photoId]")
+        }
       }
-      println(s"New album created ${newAlbum.getUrl}")
+      println("done.")
     }
     else {
       println(s"No photos uploaded. Album not created.")
     }
   }
 }
+
+class AppException(message: String, cause: Throwable = null) extends RuntimeException(message, cause)
